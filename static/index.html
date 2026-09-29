@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARES · Automated Remote Engagement System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#E10600;--red-dim:#8B0000;--red-glow:rgba(225,6,0,0.45);
+  --red-faint:rgba(225,6,0,0.08);
+  --bg0:#060608;--bg1:#0A0A0E;--bg2:#0F0F14;--bg3:#141418;--bgh:#1A1A20;
+  --b0:rgba(255,255,255,0.06);--b1:rgba(255,255,255,0.12);--b2:rgba(255,255,255,0.22);
+  --t1:#F0F0F8;--t2:#8888AA;--t3:#444466;--t4:#2A2A40;
+  --green:#00E676;--yellow:#FFD700;--cyan:#00E5FF;
+  --fh:'Barlow Condensed',sans-serif;
+  --fb:'Barlow',sans-serif;
+  --fm:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth;height:100%}
+body{
+  background:var(--bg0);color:var(--t1);font-family:var(--fb);
+  min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;z-index:0;
+}
+::-webkit-scrollbar{width:4px;background:var(--bg0)}
+::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+
+/* ── TOPBAR ── */
+.topbar{
+  position:relative;z-index:100;
+  background:var(--bg0);border-bottom:1px solid var(--b0);
+  height:34px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;
+  font-family:var(--fm);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--t3);flex-shrink:0;
+}
+.tb-r{display:flex;align-items:center;gap:20px}
+.live-dot{display:flex;align-items:center;gap:5px;color:var(--red);font-weight:700}
+.dot{width:6px;height:6px;background:var(--red);border-radius:50%;
+  box-shadow:0 0 8px var(--red);animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.5)}}
+
+/* ── TICKER ── */
+.ticker{
+  position:relative;z-index:100;height:28px;display:flex;align-items:center;
+  background:var(--red);overflow:hidden;flex-shrink:0;
+}
+.ticker-flag{
+  flex-shrink:0;padding:0 14px;height:100%;display:flex;align-items:center;gap:6px;
+  background:rgba(0,0,0,.35);border-right:1px solid rgba(255,255,255,.2);
+  font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.2em;
+  color:#fff;text-transform:uppercase;
+}
+.ticker-scroll{overflow:hidden;flex:1}
+.ticker-inner{
+  display:inline-block;white-space:nowrap;
+  animation:ticker-run 60s linear infinite;
+  font-family:var(--fm);font-size:9px;font-weight:600;
+  color:rgba(255,255,255,.93);padding-left:100%;letter-spacing:.06em;
+}
+@keyframes ticker-run{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+
+/* ── MAIN LAYOUT ── */
+.shell{display:flex;flex:1;overflow:hidden;position:relative;z-index:1}
+
+/* ── LEFT SIDEBAR ── */
+.sidebar{
+  width:280px;flex-shrink:0;
+  background:var(--bg1);border-right:1px solid var(--b0);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sidebar-header{
+  padding:20px 20px 14px;border-bottom:1px solid var(--b0);
+}
+.ares-logo{
+  font-family:var(--fh);font-size:56px;font-weight:900;
+  letter-spacing:-.02em;line-height:1;
+}
+.ares-logo .a,.ares-logo .e{color:#fff}
+.ares-logo .r{color:var(--red);text-shadow:0 0 30px var(--red-glow)}
+.ares-logo .s{color:var(--red);text-shadow:0 0 30px var(--red-glow)}
+.logo-sub{font-family:var(--fm);font-size:8px;letter-spacing:.2em;color:var(--t3);margin-top:4px;text-transform:uppercase}
+.logo-version{font-family:var(--fm);font-size:8px;color:var(--red);margin-top:2px;letter-spacing:.15em}
+
+.sidebar-section{
+  padding:14px 20px;border-bottom:1px solid var(--b0);flex-shrink:0;
+}
+.sidebar-section-title{
+  font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:.22em;
+  color:var(--red);text-transform:uppercase;margin-bottom:10px;
+}
+
+/* Telemetry bars */
+.telem-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.telem-label{font-family:var(--fm);font-size:9px;color:var(--red);width:32px;letter-spacing:.06em;flex-shrink:0}
+.telem-bar-track{flex:1;height:4px;background:var(--b0);border-radius:2px;overflow:hidden;position:relative}
+.telem-bar-fill{height:100%;border-radius:2px;transition:width .8s ease}
+.telem-val{font-family:var(--fm);font-size:9px;color:var(--t2);width:40px;text-align:right;flex-shrink:0}
+.telem-spark{font-family:var(--fm);font-size:9px;color:var(--t3);letter-spacing:0;margin-left:4px;flex-shrink:0}
+
+/* Nameplate */
+.nameplate{
+  background:var(--bg2);border:1px solid var(--b0);border-left:3px solid var(--red);
+  border-radius:3px;padding:12px;
+}
+.np-driver{font-family:var(--fh);font-size:20px;font-weight:900;color:var(--red);letter-spacing:.1em}
+.np-status{font-family:var(--fm);font-size:8px;color:var(--t2);letter-spacing:.14em;text-transform:uppercase;margin-top:3px}
+.np-query{font-family:var(--fb);font-size:11px;color:var(--t1);margin-top:8px;line-height:1.4;min-height:16px;word-break:break-word}
+.sector-strip{display:flex;gap:4px;margin-top:8px}
+.sector{font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:.1em;
+  padding:2px 6px;border-radius:2px;transition:all .3s}
+.sector.off{background:var(--bg3);color:var(--t3)}
+.sector.s1{background:rgba(225,6,0,.2);color:var(--red)}
+.sector.s2{background:rgba(255,215,0,.2);color:var(--yellow)}
+.sector.s3{background:rgba(0,230,118,.2);color:var(--green)}
+.pit-lights{display:flex;gap:5px;margin-top:8px;align-items:center}
+.pit-light{width:10px;height:10px;border-radius:50%;border:1px solid rgba(225,6,0,.3);transition:all .3s}
+.pit-light.on{background:var(--red);box-shadow:0 0 8px var(--red);border-color:var(--red)}
+.pit-label{font-family:var(--fm);font-size:8px;color:var(--t3);letter-spacing:.12em;margin-left:4px;text-transform:uppercase}
+
+/* Clock + Info */
+.clock-val{font-family:var(--fh);font-size:32px;font-weight:900;color:var(--t1);letter-spacing:.04em}
+.clock-date{font-family:var(--fm);font-size:9px;color:var(--t2);letter-spacing:.1em;margin-top:2px}
+.info-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.info-key{font-family:var(--fm);font-size:8px;color:var(--t3);letter-spacing:.12em;text-transform:uppercase}
+.info-val{font-family:var(--fm);font-size:9px;color:var(--t1);letter-spacing:.06em}
+.info-val.red{color:var(--red)}
+.info-val.green{color:var(--green)}
+
+.sidebar-spacer{flex:1}
+.sidebar-footer{
+  padding:12px 20px;border-top:1px solid var(--b0);
+  font-family:var(--fm);font-size:8px;letter-spacing:.12em;color:var(--t3);
+  text-transform:uppercase;
+}
+.state-indicator{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.state-dot{width:8px;height:8px;border-radius:50%;background:var(--t4);transition:all .3s;flex-shrink:0}
+.state-dot.neutral{background:var(--t3)}
+.state-dot.listening{background:var(--red);box-shadow:0 0 10px var(--red);animation:pulse-red .8s infinite}
+.state-dot.thinking{background:var(--yellow);box-shadow:0 0 10px var(--yellow);animation:pulse-yellow .6s infinite}
+.state-dot.speaking{background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse-green .5s infinite}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 6px var(--red)}50%{box-shadow:0 0 14px var(--red)}}
+@keyframes pulse-yellow{0%,100%{box-shadow:0 0 6px var(--yellow)}50%{box-shadow:0 0 14px var(--yellow)}}
+@keyframes pulse-green{0%,100%{box-shadow:0 0 6px var(--green)}50%{box-shadow:0 0 14px var(--green)}}
+.state-text{font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.18em;color:var(--t2)}
+.state-text.neutral{color:var(--t3)}
+.state-text.listening{color:var(--red)}
+.state-text.thinking{color:var(--yellow)}
+.state-text.speaking{color:var(--green)}
+
+/* MIC ALWAYS-ON indicator */
+.mic-always-on{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(225,6,0,0.08);border:1px solid rgba(225,6,0,0.2);
+  border-radius:3px;padding:6px 10px;margin-top:8px;
+}
+.mic-ao-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--red);
+  box-shadow:0 0 8px var(--red);animation:blink 1s ease-in-out infinite;
+}
+.mic-ao-label{font-family:var(--fm);font-size:8px;color:var(--red);letter-spacing:.14em;text-transform:uppercase}
+
+/* ── MAIN CONTENT ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* Nav */
+.nav{
+  background:var(--bg1);border-bottom:1px solid var(--b0);
+  padding:0 24px;display:flex;align-items:center;flex-shrink:0;
+}
+.nav-btn{
+  font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--t3);padding:14px 16px;cursor:pointer;
+  border:none;background:none;border-bottom:2px solid transparent;
+  transition:all .2s;white-space:nowrap;
+}
+.nav-btn:hover{color:var(--t1);border-color:rgba(225,6,0,.4)}
+.nav-btn.active{color:var(--t1);border-color:var(--red)}
+.nav-spacer{flex:1}
+.ws-status{
+  font-family:var(--fm);font-size:8px;font-weight:700;letter-spacing:.18em;
+  color:var(--t3);text-transform:uppercase;display:flex;align-items:center;gap:6px;
+}
+.ws-dot{width:6px;height:6px;border-radius:50%;background:var(--t4);transition:all .3s}
+.ws-dot.connected{background:var(--green);box-shadow:0 0 8px var(--green)}
+.ws-dot.error{background:var(--red);box-shadow:0 0 8px var(--red)}
+
+/* Chat area */
+.chat-area{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px}
+
+/* Boot message */
+.boot-msg{
+  background:var(--bg2);border:1px solid var(--b0);border-left:3px solid var(--red);
+  border-radius:3px;padding:16px 20px;
+}
+.boot-label{font-family:var(--fm);font-size:8px;color:var(--red);letter-spacing:.2em;text-transform:uppercase;margin-bottom:6px}
+.boot-text{font-family:var(--fb);font-size:14px;color:var(--t1);line-height:1.6}
+
+/* Messages */
+.msg{display:flex;flex-direction:column;gap:4px;animation:fadeUp .3s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg-meta{font-family:var(--fm);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+.msg-meta .sender{font-weight:700}
+.msg-meta .sender.boss{color:var(--t2)}
+.msg-meta .sender.ares{color:var(--red)}
+.msg-bubble{
+  padding:14px 18px;border-radius:3px;max-width:85%;
+  font-family:var(--fb);font-size:14px;line-height:1.65;
+}
+.msg-bubble.boss{background:var(--bg3);border:1px solid var(--b0);color:var(--t2);align-self:flex-end;border-bottom-right-radius:0;}
+.msg-bubble.ares{background:var(--bg2);border:1px solid var(--b0);border-left:3px solid var(--red);color:var(--t1);align-self:flex-start;border-bottom-left-radius:0;}
+.msg.boss{align-items:flex-end}
+.msg.ares{align-items:flex-start}
+
+/* Thinking */
+.thinking-indicator{
+  display:flex;align-items:center;gap:10px;padding:14px 18px;
+  background:var(--bg2);border:1px solid var(--b0);border-left:3px solid var(--yellow);
+  border-radius:3px;align-self:flex-start;animation:fadeUp .3s ease both;
+}
+.think-dots{display:flex;gap:4px}
+.think-dot{width:5px;height:5px;border-radius:50%;background:var(--yellow);animation:bounce-dot 1.2s ease-in-out infinite;}
+.think-dot:nth-child(2){animation-delay:.2s}
+.think-dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce-dot{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+.think-text{font-family:var(--fm);font-size:10px;color:var(--yellow);letter-spacing:.14em;text-transform:uppercase}
+
+/* ── INPUT AREA ── */
+.input-area{
+  background:var(--bg1);border-top:1px solid var(--b0);
+  padding:16px 24px;flex-shrink:0;
+}
+
+/* Voice waveform */
+.waveform-bar{
+  height:40px;background:var(--bg2);border:1px solid var(--b0);
+  border-radius:3px;overflow:hidden;position:relative;
+  display:none;margin-bottom:10px;
+  align-items:center;justify-content:center;
+}
+.waveform-bar.active{display:flex}
+.waveform-canvas{width:100%;height:100%}
+.waveform-label{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  font-family:var(--fm);font-size:8px;color:var(--red);letter-spacing:.14em;
+  font-weight:700;text-transform:uppercase;
+}
+.interim-text{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  font-family:var(--fb);font-size:11px;color:rgba(225,6,0,.9);
+  letter-spacing:.04em;max-width:80%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+
+/* Input row */
+.input-row{display:flex;gap:10px;align-items:flex-end}
+.text-input-wrap{flex:1;position:relative}
+#text-input{
+  width:100%;background:var(--bg2);border:1px solid var(--b1);
+  border-radius:3px;padding:12px 16px;
+  font-family:var(--fb);font-size:14px;color:var(--t1);
+  resize:none;height:48px;line-height:1.5;transition:border .2s;
+  outline:none;
+}
+#text-input:focus{border-color:rgba(225,6,0,.5);box-shadow:0 0 0 1px rgba(225,6,0,.2)}
+#text-input::placeholder{color:var(--t4)}
+#text-input::-webkit-scrollbar{display:none}
+
+/* Buttons */
+.btn{
+  border:none;border-radius:3px;cursor:pointer;transition:all .2s;
+  font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;
+  flex-shrink:0;
+}
+.btn-send{background:var(--red);color:#fff;padding:0 20px;height:48px;box-shadow:0 0 20px rgba(225,6,0,.3);}
+.btn-send:hover{background:#ff1a1a;box-shadow:0 0 28px rgba(225,6,0,.5)}
+.btn-send:disabled{background:var(--bg3);color:var(--t3);box-shadow:none;cursor:not-allowed}
+
+.btn-mic{
+  width:48px;height:48px;
+  background:var(--bg2);border:1px solid var(--b1);color:var(--t2);
+  position:relative;
+}
+.btn-mic:hover{border-color:rgba(225,6,0,.4);color:var(--red)}
+/* Always-on listening state */
+.btn-mic.always-on{
+  background:rgba(225,6,0,0.1);border-color:rgba(225,6,0,0.4);color:var(--red);
+}
+.btn-mic.listening{
+  background:rgba(225,6,0,.2);border-color:var(--red);color:var(--red);
+  box-shadow:0 0 20px rgba(225,6,0,.5);animation:mic-pulse 1s ease-in-out infinite;
+}
+@keyframes mic-pulse{0%,100%{box-shadow:0 0 10px rgba(225,6,0,.4)}50%{box-shadow:0 0 26px rgba(225,6,0,.7)}}
+.btn-mic svg{width:18px;height:18px;transition:all .2s}
+
+.btn-stop{background:var(--bg2);border:1px solid var(--b1);color:var(--t3);padding:0 16px;height:48px;}
+.btn-stop:hover{border-color:rgba(255,215,0,.3);color:var(--yellow)}
+
+.btn-f1{background:var(--red-faint);border:1px solid rgba(225,6,0,.25);color:var(--red);padding:0 16px;height:48px;}
+.btn-f1:hover{background:rgba(225,6,0,.15);border-color:rgba(225,6,0,.4)}
+
+/* STT error notice */
+.stt-notice{font-family:var(--fm);font-size:8px;color:var(--t3);letter-spacing:.1em;margin-top:6px;display:none;}
+.stt-notice.show{display:block}
+
+/* Not supported banner */
+.stt-banner{
+  background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);
+  border-radius:3px;padding:8px 14px;margin-bottom:10px;
+  font-family:var(--fm);font-size:9px;color:var(--yellow);letter-spacing:.1em;
+  display:none;
+}
+.stt-banner.show{display:block}
+
+/* WS error banner */
+.ws-banner{
+  background:rgba(225,6,0,.08);border:1px solid rgba(225,6,0,.2);
+  border-radius:3px;padding:8px 14px;margin-bottom:10px;
+  font-family:var(--fm);font-size:9px;color:var(--red);letter-spacing:.1em;
+  display:none;
+}
+.ws-banner.show{display:block}
+
+/* Music bar */
+.music-bar{background:var(--bg2);border-top:1px solid var(--b0);padding:10px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.music-bar.hidden{display:none}
+.music-note{font-size:14px;color:var(--red);animation:spin-slow 3s linear infinite}
+@keyframes spin-slow{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.music-info{flex:1;min-width:0}
+.music-track{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.music-artist{font-family:var(--fm);font-size:9px;color:var(--t3);margin-top:1px;letter-spacing:.06em}
+.music-progress-track{height:2px;background:var(--b0);border-radius:1px;margin-top:6px;overflow:hidden}
+.music-progress-fill{height:100%;background:var(--red);border-radius:1px;transition:width 2s linear}
+
+/* Spectrum footer */
+.spectrum-footer{height:28px;background:var(--bg0);border-top:1px solid var(--b0);overflow:hidden;position:relative;display:flex;align-items:center;flex-shrink:0;}
+.spectrum-canvas{width:100%;height:100%}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .topbar .tb-r span:not(:last-child):not(.live-dot){display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span>ARES · AUTOMATED REMOTE ENGAGEMENT SYSTEM · v4.2 · GEMINI 2.5 FLASH · OPENF1 + JOLPICA</span>
+  <div class="tb-r">
+    <span>VOICE</span><span>TEXT</span><span>F1</span>
+    <span class="live-dot"><div class="dot"></div>LIVE</span>
+  </div>
+</div>
+
+<div class="ticker">
+  <div class="ticker-flag"><div class="dot"></div>ARES FEED</div>
+  <div class="ticker-scroll">
+    <span class="ticker-inner" id="ticker-text">
+      SYSTEMS NOMINAL · GEMINI 2.5 FLASH ONLINE · VOICE ALWAYS-ON · OPENF1 LIVE DATA · JOLPICA STANDINGS · F1 INTELLIGENCE ACTIVE · KOKORO TTS ENGINE · MULTILINGUAL READY · MiTSURU DRIVER CARD ACTIVE · RACE CONTROL FEED STANDING BY ·
+    </span>
+  </div>
+</div>
+
+<div class="shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="ares-logo">
+        <span class="a">A</span><span class="r">R</span><span class="e">E</span><span class="s">S</span>
+      </div>
+      <div class="logo-sub">Automated Remote Engagement System</div>
+      <div class="logo-version">v4.2 · GEMINI 2.5 FLASH · OpenF1 + Jolpica</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System State</div>
+      <div class="state-indicator">
+        <div class="state-dot neutral" id="state-dot"></div>
+        <span class="state-text neutral" id="state-text">STANDBY</span>
+      </div>
+      <div class="mic-always-on" id="mic-always-on-badge" style="display:none">
+        <div class="mic-ao-dot"></div>
+        <span class="mic-ao-label">MIC ALWAYS ON</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">◈ Telemetry + Spark</div>
+      <div class="telem-row">
+        <span class="telem-label">CPU</span>
+        <div class="telem-bar-track"><div class="telem-bar-fill" id="cpu-bar" style="width:0%;background:#E10600"></div></div>
+        <span class="telem-val" id="cpu-val">—</span>
+        <span class="telem-spark" id="cpu-spark">▁▂▁</span>
+      </div>
+      <div class="telem-row">
+        <span class="telem-label">MEM</span>
+        <div class="telem-bar-track"><div class="telem-bar-fill" id="mem-bar" style="width:0%;background:#FFD700"></div></div>
+        <span class="telem-val" id="mem-val">—</span>
+        <span class="telem-spark" id="mem-spark">▁▂▁</span>
+      </div>
+      <div class="telem-row">
+        <span class="telem-label">DISK</span>
+        <div class="telem-bar-track"><div class="telem-bar-fill" id="disk-bar" style="width:0%;background:#00E5FF"></div></div>
+        <span class="telem-val" id="disk-val">—</span>
+        <span class="telem-spark" id="disk-spark">▁▂▁</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">◈ MiTSURU · Driver Card</div>
+      <div class="nameplate">
+        <div class="np-driver">MiTSURU #01</div>
+        <div class="np-status" id="np-status">DRIVER · PRINCIPAL · SESSION ACTIVE</div>
+        <div class="np-query" id="np-query">— AWAITING INPUT —</div>
+        <div class="sector-strip">
+          <span class="sector off" id="sec1">S1</span>
+          <span class="sector off" id="sec2">S2</span>
+          <span class="sector off" id="sec3">S3</span>
+        </div>
+        <div class="pit-lights">
+          <div class="pit-light" id="pl1"></div>
+          <div class="pit-light" id="pl2"></div>
+          <div class="pit-light" id="pl3"></div>
+          <div class="pit-light" id="pl4"></div>
+          <div class="pit-light" id="pl5"></div>
+          <span class="pit-label" id="pl-label">LIGHTS OUT</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">◈ Race Clock</div>
+      <div class="clock-val" id="clock-val">00:00:00</div>
+      <div class="clock-date" id="clock-date">—</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">◈ System Info</div>
+      <div class="info-row">
+        <span class="info-key">POWER</span>
+        <span class="info-val" id="info-pwr">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">LANG</span>
+        <span class="info-val red" id="info-lang">ENGLISH</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">MODEL</span>
+        <span class="info-val red">GEMINI-2.5-FLASH</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">TTS</span>
+        <span class="info-val" id="info-tts">KOKORO</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">STT</span>
+        <span class="info-val green" id="info-stt">WEB SPEECH</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">MIC</span>
+        <span class="info-val" id="info-mic" style="color:var(--t3)">STANDBY</span>
+      </div>
+    </div>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="sidebar-footer">
+      <div class="info-row">
+        <span class="info-key">WebSocket</span>
+        <span class="info-val" id="ws-label" style="color:var(--t3)">CONNECTING</span>
+      </div>
+      <div style="margin-top:6px;font-size:8px;color:var(--t4)">ARES · F1 RED/WHITE · MiTSURU</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="nav">
+      <button class="nav-btn active" onclick="showPanel('chat', this)">Chat</button>
+      <button class="nav-btn" onclick="showPanel('f1', this)">F1 Intelligence</button>
+      <div class="nav-spacer"></div>
+      <div class="ws-status">
+        <div class="ws-dot" id="ws-dot"></div>
+        <span id="ws-status-text">CONNECTING</span>
+      </div>
+    </div>
+
+    <div id="panel-chat" class="chat-area" style="display:flex"></div>
+
+    <div id="panel-f1" style="display:none;flex:1;overflow-y:auto;padding:24px">
+      <div style="font-family:var(--fh);font-size:32px;font-weight:900;color:var(--red);letter-spacing:.04em;margin-bottom:8px">F1 INTELLIGENCE</div>
+      <div style="font-family:var(--fm);font-size:9px;color:var(--t3);letter-spacing:.14em;margin-bottom:24px">OPENF1 (LIVE) + JOLPICA (STANDINGS)</div>
+      <button class="btn btn-f1" style="margin-bottom:24px;width:fit-content;padding:0 24px;height:44px" onclick="fetchF1()">
+        <span>⬡</span> LOAD F1 DATA
+      </button>
+      <div id="f1-content" style="font-family:var(--fm);font-size:11px;color:var(--t2)">Click to load F1 data from your ARES backend.</div>
+    </div>
+
+    <div class="music-bar hidden" id="music-bar">
+      <div class="music-note">♫</div>
+      <div class="music-info">
+        <div class="music-track" id="music-track">—</div>
+        <div class="music-artist" id="music-artist">—</div>
+        <div class="music-progress-track">
+          <div class="music-progress-fill" id="music-progress" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spectrum-footer">
+      <canvas class="spectrum-canvas" id="spectrum-canvas"></canvas>
+    </div>
+
+    <div class="input-area">
+      <div class="stt-banner" id="stt-banner">
+        ⚠ Web Speech API unavailable in this browser. Use Chrome/Edge for voice input. Text input works normally.
+      </div>
+      <div class="ws-banner" id="ws-banner">
+        ⚠ Not connected to ARES server. Run: <strong>python3 server.py</strong> · then refresh.
+      </div>
+
+      <div class="waveform-bar" id="waveform-bar">
+        <canvas id="waveform-canvas" class="waveform-canvas"></canvas>
+        <div class="interim-text" id="interim-text"></div>
+        <div class="waveform-label">● CAPTURING</div>
+      </div>
+
+      <div class="input-row">
+        <button class="btn btn-mic" id="btn-mic" title="Click to toggle always-on voice mode" onclick="toggleMic()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+
+        <div class="text-input-wrap">
+          <textarea id="text-input" placeholder="Type a query or use the always-on mic… (Enter to send)" rows="1"
+            onkeydown="handleTextKey(event)" oninput="autoResize(this)"></textarea>
+        </div>
+
+        <button class="btn btn-send" id="btn-send" onclick="sendTextQuery()">SEND</button>
+
+        <button class="btn btn-stop" onclick="stopAudio()" title="Stop audio (ESC)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+          </svg>
+        </button>
+      </div>
+      <div style="font-family:var(--fm);font-size:8px;color:var(--t3);letter-spacing:.1em;margin-top:6px;text-transform:uppercase" id="mic-hint">
+        Click mic to toggle always-on voice · ESC stops audio
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIG — auto-detect server host
+// ══════════════════════════════════════════════════════
+const WS_URL = `ws://${location.hostname || 'localhost'}:3000/ws`;
+
+// ══════════════════════════════════════════════════════
+//  WEBSOCKET
+// ══════════════════════════════════════════════════════
+let ws = null;
+let wsConnected = false;
+let wsReconnectTimer = null;
+let wsReconnectDelay = 2000;
+
+function connectWS() {
+  if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) return;
+
+  try {
+    ws = new WebSocket(WS_URL);
+  } catch(e) {
+    setWsStatus(false);
+    scheduleReconnect();
+    return;
+  }
+
+  ws.onopen = () => {
+    wsConnected = true;
+    wsReconnectDelay = 2000;
+    setWsStatus(true);
+    clearTimeout(wsReconnectTimer);
+    document.getElementById('ws-banner').classList.remove('show');
+    addSystemMsg('Connected to ARES server');
+    // Auto-start always-on mic when server connects
+    if (sttSupported && !micAlwaysOn) {
+      setTimeout(startAlwaysOnMic, 800);
+    }
+  };
+
+  ws.onclose = () => {
+    wsConnected = false;
+    setWsStatus(false);
+    scheduleReconnect();
+  };
+
+  ws.onerror = () => {
+    wsConnected = false;
+    setWsStatus(false);
+    // Show the helpful banner
+    document.getElementById('ws-banner').classList.add('show');
+  };
+
+  ws.onmessage = (evt) => {
+    try {
+      const msg = JSON.parse(evt.data);
+      handleServerMsg(msg);
+    } catch(e) {}
+  };
+}
+
+function scheduleReconnect() {
+  clearTimeout(wsReconnectTimer);
+  wsReconnectTimer = setTimeout(() => {
+    connectWS();
+    wsReconnectDelay = Math.min(wsReconnectDelay * 1.5, 15000);
+  }, wsReconnectDelay);
+}
+
+function setWsStatus(connected) {
+  const dot = document.getElementById('ws-dot');
+  const txt = document.getElementById('ws-status-text');
+  const lbl = document.getElementById('ws-label');
+  if (connected) {
+    dot.className = 'ws-dot connected';
+    txt.textContent = 'CONNECTED';
+    if (lbl) { lbl.textContent = 'CONNECTED'; lbl.style.color = 'var(--green)'; }
+  } else {
+    dot.className = 'ws-dot error';
+    txt.textContent = 'RECONNECTING…';
+    if (lbl) { lbl.textContent = 'RECONNECTING'; lbl.style.color = 'var(--red)'; }
+  }
+}
+
+function sendWS(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(obj));
+    return true;
+  }
+  return false;
+}
+
+// ══════════════════════════════════════════════════════
+//  MESSAGE HANDLERS
+// ══════════════════════════════════════════════════════
+let thinkingEl = null;
+
+function handleServerMsg(msg) {
+  switch(msg.type) {
+    case 'boot':
+      addBootMsg(msg.message || 'ARES Online.');
+      setState(msg.state || 'neutral');
+      break;
+
+    case 'state':
+      setState(msg.state);
+      if (msg.query) updateNameplate(msg.query);
+      if (msg.state === 'thinking') showThinking();
+      if (msg.state === 'neutral') {
+        removeThinking();
+        // After ARES finishes speaking/neutral → auto-restart mic
+        scheduleAutoListen();
+      }
+      break;
+
+    case 'response':
+      removeThinking();
+      if (msg.query) addMessage('boss', msg.query);
+      if (msg.reply) addMessage('ares', msg.reply);
+      setState(msg.state || 'speaking');
+      // Will auto-restart mic when state goes back to neutral
+      break;
+
+    case 'telemetry':
+      updateTelemetry(msg);
+      break;
+
+    case 'f1_data':
+      renderF1Data(msg.data);
+      break;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let currentState = 'neutral';
+
+function setState(state) {
+  currentState = state;
+  const dot    = document.getElementById('state-dot');
+  const txt    = document.getElementById('state-text');
+  const status = document.getElementById('np-status');
+
+  dot.className = `state-dot ${state}`;
+  txt.className = `state-text ${state}`;
+
+  const labels = {
+    neutral:   ['STANDBY',     'SYS · NOMINAL'],
+    listening: ['LISTENING',   'AUDIO · CAPTURING'],
+    thinking:  ['PROCESSING',  'NEURAL · PROCESSING'],
+    speaking:  ['TRANSMITTING','VOCAL · TRANSMITTING'],
+  };
+  const [stateLabel, npLabel] = labels[state] || ['STANDBY','SYS · NOMINAL'];
+  txt.textContent = stateLabel;
+  if (status) status.textContent = npLabel;
+  updateSectorStrip(state);
+  updatePitLights(state);
+}
+
+function updateNameplate(query) {
+  const el = document.getElementById('np-query');
+  if (el) el.textContent = query.length > 50 ? query.slice(0,50)+'…' : query;
+}
+
+function updateSectorStrip(state) {
+  const configs = {
+    neutral:   [false,false,false],
+    listening: [true, false,false],
+    thinking:  [true, true, false],
+    speaking:  [true, true, true],
+  };
+  const [s1,s2,s3] = configs[state] || [false,false,false];
+  document.getElementById('sec1').className = `sector ${s1?'s1':'off'}`;
+  document.getElementById('sec2').className = `sector ${s2?'s2':'off'}`;
+  document.getElementById('sec3').className = `sector ${s3?'s3':'off'}`;
+}
+
+let pitLightTimer = null;
+function updatePitLights(state) {
+  clearInterval(pitLightTimer);
+  const lights = [1,2,3,4,5].map(i => document.getElementById(`pl${i}`));
+  const label  = document.getElementById('pl-label');
+  if (state === 'neutral') {
+    lights.forEach(l => l.classList.remove('on'));
+    if (label) label.textContent = 'LIGHTS OUT';
+  } else if (state === 'listening') {
+    let n = 0;
+    pitLightTimer = setInterval(() => {
+      n = Math.min(n+1, 5);
+      lights.forEach((l,i) => l.classList.toggle('on', i < n));
+      if (label) label.textContent = 'LISTENING';
+    }, 300);
+  } else if (state === 'thinking') {
+    lights.forEach(l => l.classList.add('on'));
+    if (label) label.textContent = 'PROCESSING';
+    let toggle = true;
+    pitLightTimer = setInterval(() => {
+      toggle = !toggle;
+      lights.forEach(l => l.classList.toggle('on', toggle));
+    }, 350);
+  } else if (state === 'speaking') {
+    let phase = 0;
+    pitLightTimer = setInterval(() => {
+      phase++;
+      lights.forEach((l,i) => l.classList.toggle('on', (i + phase) % 2 === 0));
+      if (label) label.textContent = 'TRANSMIT';
+    }, 200);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  CHAT MESSAGES
+// ══════════════════════════════════════════════════════
+function addBootMsg(text) {
+  const area = document.getElementById('panel-chat');
+  const el = document.createElement('div');
+  el.className = 'boot-msg';
+  el.innerHTML = `<div class="boot-label">◈ ARES · BOOT SEQUENCE COMPLETE</div>
+                  <div class="boot-text">${escapeHtml(text)}</div>`;
+  area.appendChild(el);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addMessage(sender, text) {
+  const area = document.getElementById('panel-chat');
+  const el = document.createElement('div');
+  el.className = `msg ${sender}`;
+  const now = new Date().toLocaleTimeString('en-GB', {hour12:false});
+  const label = sender === 'boss' ? 'BOSS' : 'ARES';
+  el.innerHTML = `
+    <div class="msg-meta"><span class="sender ${sender}">${label}</span> · ${now}</div>
+    <div class="msg-bubble ${sender}">${formatText(text)}</div>
+  `;
+  area.appendChild(el);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addSystemMsg(text) {
+  const area = document.getElementById('panel-chat');
+  const el = document.createElement('div');
+  el.style.cssText = 'font-family:var(--fm);font-size:9px;color:var(--t3);letter-spacing:.1em;padding:4px 0;text-transform:uppercase';
+  el.textContent = `· ${text}`;
+  area.appendChild(el);
+  area.scrollTop = area.scrollHeight;
+}
+
+function showThinking() {
+  removeThinking();
+  const area = document.getElementById('panel-chat');
+  thinkingEl = document.createElement('div');
+  thinkingEl.className = 'thinking-indicator';
+  thinkingEl.innerHTML = `
+    <div class="think-dots">
+      <div class="think-dot"></div><div class="think-dot"></div><div class="think-dot"></div>
+    </div>
+    <span class="think-text">Neural processing…</span>
+  `;
+  area.appendChild(thinkingEl);
+  area.scrollTop = area.scrollHeight;
+}
+
+function removeThinking() {
+  if (thinkingEl) { thinkingEl.remove(); thinkingEl = null; }
+}
+
+function escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatText(t) {
+  return escapeHtml(t).replace(/\n/g,'<br>');
+}
+
+// ══════════════════════════════════════════════════════
+//  TELEMETRY
+// ══════════════════════════════════════════════════════
+function updateTelemetry(d) {
+  setBar('cpu', d.cpu);
+  setBar('mem', d.mem);
+  setBar('disk', d.disk);
+  if (d.cpu_spark)  document.getElementById('cpu-spark').textContent  = d.cpu_spark;
+  if (d.mem_spark)  document.getElementById('mem-spark').textContent  = d.mem_spark;
+  if (d.disk_spark) document.getElementById('disk-spark').textContent = d.disk_spark;
+
+  const c = document.getElementById('clock-val');
+  if (c) c.textContent = d.time || '—';
+  const cd = document.getElementById('clock-date');
+  if (cd) cd.textContent = `${d.day || ''} · ${d.date || ''}`;
+
+  setEl('info-pwr', d.pwr || '—');
+  setEl('info-lang', (d.lang || 'EN').toUpperCase());
+
+  const m = d.music;
+  if (m && m.playing && m.track) {
+    document.getElementById('music-bar').classList.remove('hidden');
+    setEl('music-track', m.track);
+    setEl('music-artist', m.artist || '');
+    const pct = m.duration > 0 ? (m.position / m.duration * 100) : 0;
+    const fill = document.getElementById('music-progress');
+    if (fill) fill.style.width = pct + '%';
+  } else {
+    document.getElementById('music-bar').classList.add('hidden');
+  }
+}
+
+function setBar(key, val) {
+  const bar = document.getElementById(`${key}-bar`);
+  const txt = document.getElementById(`${key}-val`);
+  if (!bar || !txt) return;
+  const pct = Math.min(100, Math.max(0, val || 0));
+  bar.style.width = pct + '%';
+  bar.style.background = pct < 50 ? 'var(--green)' : pct < 80 ? 'var(--yellow)' : 'var(--red)';
+  txt.textContent = pct.toFixed(0) + '%';
+}
+
+function setEl(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// ══════════════════════════════════════════════════════
+//  SEND QUERY
+// ══════════════════════════════════════════════════════
+function sendQuery(text) {
+  if (!text.trim()) return;
+  if (!wsConnected) {
+    addSystemMsg('Not connected to server — run python3 server.py');
+    return;
+  }
+  updateNameplate(text);
+  sendWS({ action: 'query', text: text.trim() });
+}
+
+function sendTextQuery() {
+  const inp = document.getElementById('text-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  autoResize(inp);
+  sendQuery(text);
+}
+
+function handleTextKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendTextQuery();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function stopAudio() {
+  sendWS({ action: 'stop_audio' });
+  removeThinking();
+  setState('neutral');
+}
+
+// ══════════════════════════════════════════════════════
+//  WEB SPEECH API — ALWAYS-ON MODE  (mirrors main.py loop)
+//  Like main.py: after each response → auto re-listen
+// ══════════════════════════════════════════════════════
+let recognition     = null;
+let isListening     = false;
+let micAlwaysOn     = false;  // Always-on mode (mirrors main.py default)
+let sttSupported    = false;
+let autoListenTimer = null;
+let currentSttLang  = 'en-IN';
+
+const langToCode = {
+  'ENGLISH':'en-IN','HINDI':'hi-IN','TAMIL':'ta-IN','TELUGU':'te-IN',
+  'KANNADA':'kn-IN','BENGALI':'bn-IN','MARATHI':'mr-IN','GUJARATI':'gu-IN',
+  'PUNJABI':'pa-IN','MALAYALAM':'ml-IN','FRENCH':'fr-FR','SPANISH':'es-ES',
+  'GERMAN':'de-DE','JAPANESE':'ja-JP','ARABIC':'ar-SA',
+};
+
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    document.getElementById('stt-banner').classList.add('show');
+    setEl('info-stt', 'UNSUPPORTED');
+    document.getElementById('info-stt').style.color = 'var(--red)';
+    const micBtn = document.getElementById('btn-mic');
+    if (micBtn) { micBtn.disabled = true; micBtn.title = 'Voice not supported in this browser'; }
+    return;
+  }
+
+  sttSupported = true;
+  setEl('info-stt', 'WEB SPEECH');
+
+  recognition = new SpeechRecognition();
+  recognition.continuous      = false;
+  recognition.interimResults  = true;
+  recognition.maxAlternatives = 1;
+  recognition.lang            = currentSttLang;
+
+  recognition.onstart = () => {
+    isListening = true;
+    setState('listening');
+    document.getElementById('btn-mic').classList.remove('always-on');
+    document.getElementById('btn-mic').classList.add('listening');
+    document.getElementById('waveform-bar').classList.add('active');
+    document.getElementById('interim-text').textContent = '';
+    document.getElementById('mic-always-on-badge').style.display = 'flex';
+    setEl('info-mic', 'ACTIVE');
+    document.getElementById('info-mic').style.color = 'var(--red)';
+    startWaveformAnimation();
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    document.getElementById('btn-mic').classList.remove('listening');
+    document.getElementById('waveform-bar').classList.remove('active');
+    stopWaveformAnimation();
+
+    if (currentState === 'listening') setState('neutral');
+
+    // KEY BEHAVIOR: if always-on and not processing, restart immediately
+    if (micAlwaysOn && wsConnected &&
+        currentState !== 'thinking' && currentState !== 'speaking') {
+      scheduleAutoListen(300);
+    } else if (micAlwaysOn) {
+      // Will restart when state returns to neutral (see handleServerMsg)
+      setEl('info-mic', 'WAITING');
+      document.getElementById('info-mic').style.color = 'var(--yellow)';
+    }
+  };
+
+  recognition.onerror = (e) => {
+    isListening = false;
+    document.getElementById('btn-mic').classList.remove('listening');
+    document.getElementById('waveform-bar').classList.remove('active');
+    stopWaveformAnimation();
+
+    const ignored = ['no-speech', 'aborted'];
+    if (!ignored.includes(e.error)) {
+      addSystemMsg(`STT: ${e.error}`);
+    }
+
+    if (currentState === 'listening') setState('neutral');
+
+    // Break the infinite loop if the browser's speech server is unreachable
+    if (e.error === 'network') {
+      stopAlwaysOnMic();
+      addSystemMsg('⚠ Voice suspended: Browser blocked the Speech API. Use Chrome via localhost, or check your VPN/Adblocker.');
+    }
+    // Otherwise, retry after standard errors if always-on
+    else if (micAlwaysOn && wsConnected && !['not-allowed','service-not-available'].includes(e.error)) {
+      scheduleAutoListen(1000);
+    }
+  };
+
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    document.getElementById('interim-text').textContent = interim || final;
+
+    if (final.trim()) {
+      document.getElementById('interim-text').textContent = '';
+      sendQuery(final.trim());
+      // After sending, mic will restart when ARES goes back to neutral
+    }
+  };
+}
+
+function scheduleAutoListen(delay = 500) {
+  clearTimeout(autoListenTimer);
+  autoListenTimer = setTimeout(() => {
+    if (micAlwaysOn && !isListening && wsConnected &&
+        currentState !== 'thinking' && currentState !== 'speaking') {
+      startListening();
+    }
+  }, delay);
+}
+
+function startListening() {
+  if (!sttSupported || isListening) return;
+  try {
+    recognition.lang = currentSttLang;
+    recognition.start();
+  } catch(e) {
+    // already started — ignore
+  }
+}
+
+function stopListening() {
+  if (recognition && isListening) {
+    try { recognition.stop(); } catch(e) {}
+  }
+  clearTimeout(autoListenTimer);
+}
+
+function startAlwaysOnMic() {
+  if (!sttSupported) return;
+  micAlwaysOn = true;
+  document.getElementById('btn-mic').classList.add('always-on');
+  document.getElementById('mic-always-on-badge').style.display = 'flex';
+  setEl('info-mic', 'ALWAYS ON');
+  document.getElementById('info-mic').style.color = 'var(--green)';
+  document.getElementById('mic-hint').textContent = 'Always-on mic active · Speak anytime · Click mic to pause · ESC stops audio';
+  addSystemMsg('Voice: always-on mode active · Speak anytime, Boss');
+  startListening();
+}
+
+function stopAlwaysOnMic() {
+  micAlwaysOn = false;
+  stopListening();
+  document.getElementById('btn-mic').classList.remove('always-on', 'listening');
+  document.getElementById('mic-always-on-badge').style.display = 'none';
+  setEl('info-mic', 'PAUSED');
+  document.getElementById('info-mic').style.color = 'var(--t3)';
+  document.getElementById('mic-hint').textContent = 'Click mic to toggle always-on voice · ESC stops audio';
+  addSystemMsg('Voice: mic paused');
+}
+
+function toggleMic() {
+  if (!sttSupported) {
+    addSystemMsg('Voice not supported — use Chrome or Edge, Boss.');
+    return;
+  }
+  if (micAlwaysOn) {
+    stopAlwaysOnMic();
+  } else {
+    if (!wsConnected) {
+      addSystemMsg('Connect to ARES server first (python3 server.py)');
+      return;
+    }
+    startAlwaysOnMic();
+  }
+}
+
+// Hook into state changes to restart mic in always-on mode
+// (called from handleServerMsg when state → neutral)
+function scheduleAutoListenAfterNeutral() {
+  if (micAlwaysOn && !isListening && wsConnected) {
+    scheduleAutoListen(600);
+  }
+}
+
+// Patch handleServerMsg to call this
+const _origHandleState = (state) => {
+  if (state === 'neutral') scheduleAutoListenAfterNeutral();
+};
+
+// ══════════════════════════════════════════════════════
+//  WAVEFORM CANVAS
+// ══════════════════════════════════════════════════════
+let waveAnimFrame = null;
+let wavePhase = 0;
+
+function startWaveformAnimation() {
+  const canvas = document.getElementById('waveform-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  function draw() {
+    canvas.width  = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const bars = Math.floor(W / 4);
+    for (let i = 0; i < bars; i++) {
+      const x = i * 4;
+      const v = (
+        Math.sin(wavePhase + i * 0.3) * 0.5 +
+        Math.sin(wavePhase * 1.7 + i * 0.15) * 0.3 +
+        Math.sin(wavePhase * 0.5 + i * 0.6) * 0.2
+      ) * 0.5 + 0.5;
+      const barH = Math.max(2, v * (H * 0.85));
+      const y = (H - barH) / 2;
+      ctx.fillStyle = `rgba(225,6,0,${0.5 + v * 0.5})`;
+      ctx.fillRect(x, y, 2, barH);
+    }
+    wavePhase += 0.14;
+    waveAnimFrame = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function stopWaveformAnimation() {
+  if (waveAnimFrame) { cancelAnimationFrame(waveAnimFrame); waveAnimFrame = null; }
+  const canvas = document.getElementById('waveform-canvas');
+  if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ══════════════════════════════════════════════════════
+//  SPECTRUM FOOTER
+// ══════════════════════════════════════════════════════
+let specPhase = 0;
+function drawSpectrum() {
+  const canvas = document.getElementById('spectrum-canvas');
+  if (!canvas) return;
+  canvas.width  = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const bars = Math.floor(W / 3);
+  const isSpeaking = currentState === 'speaking';
+  const isListeningState = currentState === 'listening';
+  for (let i = 0; i < bars; i++) {
+    const v = (isSpeaking || isListeningState)
+      ? (Math.sin(specPhase + i*0.38)*0.5 + Math.sin(specPhase*1.9+i*0.19)*0.3 + Math.sin(specPhase*0.6+i*0.72)*0.2)*0.5+0.5
+      : 0.08;
+    const barH = Math.max(1, v * H * 0.85);
+    const y = H - barH;
+    const alpha = (isSpeaking || isListeningState) ? (0.25 + v*0.65) : 0.15;
+    ctx.fillStyle = i%3!==1 ? `rgba(225,6,0,${alpha})` : `rgba(255,255,255,${alpha*0.5})`;
+    ctx.fillRect(i*3, y, 2, barH);
+  }
+  specPhase += 0.18;
+  requestAnimationFrame(drawSpectrum);
+}
+
+// ══════════════════════════════════════════════════════
+//  F1 PANEL
+// ══════════════════════════════════════════════════════
+function fetchF1() {
+  if (!wsConnected) { addSystemMsg('Not connected to server'); return; }
+  sendWS({ action: 'f1' });
+  document.getElementById('f1-content').innerHTML =
+    '<span style="color:var(--yellow);font-family:var(--fm);font-size:9px;letter-spacing:.14em">◉ FETCHING FROM JOLPICA + OPENF1…</span>';
+}
+
+function renderF1Data(d) {
+  if (!d) return;
+  let html = `<div style="font-family:var(--fm);font-size:8px;color:var(--red);letter-spacing:.2em;margin-bottom:16px">◈ SEASON ${d.season || '—'} · LIVE DATA</div>`;
+
+  if (d.drivers && d.drivers.length) {
+    html += `<div style="font-family:var(--fh);font-size:18px;font-weight:700;color:var(--t1);letter-spacing:.1em;margin-bottom:10px;text-transform:uppercase">Driver Standings</div>`;
+    html += '<table style="width:100%;border-collapse:collapse;margin-bottom:24px">';
+    html += '<tr style="border-bottom:1px solid var(--b0)"><th style="font-family:var(--fm);font-size:8px;color:var(--t3);letter-spacing:.16em;text-align:left;padding:6px 8px">POS</th><th style="font-family:var(--fm);font-size:8px;color:var(--t3);letter-spacing:.16em;text-align:left;padding:6px 8px">CODE</th><th style="font-family:var(--fm);font-size:8px;color:var(--t3);letter-spacing:.16em;text-align:left;padding:6px 8px">DRIVER</th><th style="font-family:var(--fm);font-size:8px;color:var(--t3);letter-spacing:.16em;text-align:right;padding:6px 8px">PTS</th></tr>';
+    d.drivers.forEach((dr,i) => {
+      const bg = i===0?'rgba(225,6,0,.06)':'transparent';
+      html += `<tr style="background:${bg};border-bottom:1px solid var(--b0)">
+        <td style="font-family:var(--fh);font-size:16px;font-weight:900;color:var(--t3);padding:8px">${dr.pos}</td>
+        <td style="font-family:var(--fh);font-size:16px;font-weight:900;color:var(--red);padding:8px">${dr.code||'?'}</td>
+        <td style="padding:8px"><div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--t1)">${dr.name||''}</div><div style="font-family:var(--fm);font-size:9px;color:var(--t3)">${dr.team||''}</div></td>
+        <td style="font-family:var(--fh);font-size:18px;font-weight:800;color:var(--t1);text-align:right;padding:8px">${dr.points}</td>
+      </tr>`;
+    });
+    html += '</table>';
+  }
+
+  if (d.last_race && d.last_race.name) {
+    html += `<div style="font-family:var(--fh);font-size:18px;font-weight:700;color:var(--t1);margin-bottom:6px;text-transform:uppercase">Last Race: ${d.last_race.name}</div>`;
+    html += `<div style="font-family:var(--fm);font-size:9px;color:var(--t3);margin-bottom:14px">${d.last_race.circuit||''} · ${d.last_race.date||''}</div>`;
+  }
+  if (d.next_race && d.next_race.name) {
+    html += `<div style="background:rgba(255,128,0,.06);border:1px solid rgba(255,128,0,.2);border-radius:3px;padding:14px;margin-top:16px">
+      <div style="font-family:var(--fm);font-size:8px;color:#FF8000;letter-spacing:.2em;margin-bottom:6px">NEXT RACE</div>
+      <div style="font-family:var(--fh);font-size:22px;font-weight:900;color:var(--t1)">${d.next_race.name}</div>
+      <div style="font-family:var(--fm);font-size:10px;color:var(--t3);margin-top:4px">${d.next_race.circuit||''} · ${d.next_race.date||''}</div>
+    </div>`;
+  }
+
+  document.getElementById('f1-content').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+//  PANEL SWITCHING
+// ══════════════════════════════════════════════════════
+function showPanel(name, btn) {
+  ['chat','f1'].forEach(p => {
+    document.getElementById(`panel-${p}`).style.display = 'none';
+  });
+  document.getElementById(`panel-${name}`).style.display = name==='chat'?'flex':'block';
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  // Space = push to talk (when not in textarea)
+  if (e.code === 'Space' &&
+      document.activeElement !== document.getElementById('text-input')) {
+    e.preventDefault();
+    if (sttSupported && !micAlwaysOn && !isListening && wsConnected) {
+      // Momentary push-to-talk if not in always-on mode
+      startListening();
+    }
+  }
+  if (e.code === 'Escape') stopAudio();
+});
+
+document.addEventListener('keyup', (e) => {
+  // Space up = stop momentary PTT (only if not always-on)
+  if (e.code === 'Space' && !micAlwaysOn && isListening) {
+    stopListening();
+  }
+});
+
+// ══════════════════════════════════════════════════════
+//  LOCAL CLOCK FALLBACK
+// ══════════════════════════════════════════════════════
+function updateClockLocal() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  const el = document.getElementById('clock-val');
+  // Only update locally if WS is not pushing telemetry
+  if (el && !wsConnected) el.textContent = `${h}:${m}:${s}`;
+}
+
+// ══════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  initSpeechRecognition();
+  connectWS();
+  drawSpectrum();
+  setInterval(updateClockLocal, 1000);
+
+  if (!sttSupported) {
+    addSystemMsg('Voice not supported in this browser — use Chrome or Edge');
+  } else {
+    addSystemMsg('Voice ready · Click mic for always-on mode · SPACE for push-to-talk · ESC stops audio');
+  }
+
+  // Show ws-banner if not connected after 3s
+  setTimeout(() => {
+    if (!wsConnected) {
+      document.getElementById('ws-banner').classList.add('show');
+    }
+  }, 3000);
+});
+
+// Patch handleServerMsg to trigger always-on mic restart
+const _origHandleServerMsg = handleServerMsg;
+// Already wired in the 'state' → 'neutral' case above
+// The scheduleAutoListenAfterNeutral() is called from handleServerMsg directly
+</script>
+</body>
+</html>

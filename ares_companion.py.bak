@@ -1,0 +1,80 @@
+"""Patches ares_companion.py to use the native backtick hotkey and main.py.
+Safe to run any number of times. Also repairs the indentation bug from the first version of this patcher.
+Nothing is written unless the result compiles."""
+import re
+import shutil
+import sys
+from pathlib import Path
+
+NEW_FN = '''def register_hotkey(bridge: Bridge, comp):
+    """Native Windows keyboard hook (ares_hotkey.py). Swallows the key only while Ares is visible."""
+    try:
+        import ares_hotkey
+        hk = ares_hotkey.HotkeyHook(HOTKEY, on_press=lambda: (log("hotkey pressed"), bridge.hotkey.emit()),
+                                    is_active=lambda: not comp.hidden_reasons,
+                                    suppress=HOTKEY_SUPPRESS, log=log)
+        hk.start()
+        log(f"hotkey ready: {HOTKEY} (suppress={HOTKEY_SUPPRESS})")
+        return hk
+    except Exception:
+        log("hotkey failed:", traceback.format_exc())
+        return None
+
+
+'''
+
+p = Path(__file__).resolve().parent / "ares_companion.py"
+src = p.read_text(encoding="utf-8")
+backup = p.with_name("ares_companion.py.bak")
+if not backup.exists():
+    shutil.copy(p, backup)
+
+
+def swap(old, new, required=True):
+    global src
+    if new in src:
+        return
+    if old in src:
+        src = src.replace(old, new, 1)
+    elif required:
+        print("Could not find this text in ares_companion.py:\n   ", old[:90])
+        sys.exit(1)
+
+
+# 1) default hotkey = backtick
+swap('HOTKEY = os.getenv("ARES_HOTKEY", "right shift+`")', 'HOTKEY = os.getenv("ARES_HOTKEY", "`")')
+
+# 2) native hook instead of the 'keyboard' package
+if "import ares_hotkey" not in src:
+    a = src.index("def register_hotkey(bridge: Bridge):")
+    m = re.search(r"^[ \t]*def main\(\):", src[a:], re.M)
+    if not m:
+        print("Could not find def main() after register_hotkey.")
+        sys.exit(1)
+    src = src[:a] + NEW_FN + src[a + m.start():].lstrip(" \t")
+
+# 3) repair an indented "def main():" left by the earlier buggy patcher
+src = re.sub(r"^[ \t]+def main\(\):", "def main():", src, flags=re.M)
+
+swap("kb = register_hotkey(bridge)", "kb = register_hotkey(bridge, comp)")
+swap("kb.unhook_all()", "kb.stop()")
+swap('    pause_act = act("Pause / hide", lambda c: comp.set_hidden("paused", c), checkable=True)\n',
+     '    pause_act = act("Pause / hide", lambda c: comp.set_hidden("paused", c), checkable=True)\n'
+     '    act("Hotkey on (untick to type ` normally)", lambda c: setattr(kb, "enabled", bool(c)) if kb else None,\n'
+     '        checkable=True, checked=True)\n', required=False)
+swap("        if self.hidden_reasons or self.agent is None:\n            return\n",
+     "        if self.hidden_reasons or self.agent is None:\n"
+     "            log('hotkey ignored: hidden=%s agent=%s' % (self.hidden_reasons, self.agent))\n"
+     "            return\n", required=False)
+
+# 4) the ARES brain file is called main.py on this machine
+src = src.replace("import main as core", "import main as core")
+src = src.replace("Press  `  (backtick) and he listens", "Press  `  (backtick) and he listens")
+
+try:
+    compile(src, str(p), "exec")
+except SyntaxError as e:
+    print(f"Patched file would not compile (line {e.lineno}: {e.msg}). Nothing was changed.")
+    sys.exit(1)
+p.write_text(src, encoding="utf-8")
+print("ares_companion.py patched OK.")
