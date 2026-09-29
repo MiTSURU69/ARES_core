@@ -1,33 +1,29 @@
-ARES Companion
-ARES is an AI-powered 3D desktop assistant for Windows that lives on your screen[cite: 6].
+# ARES Companion
 
-[cite: 11]
+ARES is an AI-powered 3D desktop assistant for Windows that lives on your screen. 
 
-Key Features
-Desktop Presence: ARES roams your screen, walks on the taskbar, and can perch on the top edges of open windows[cite: 6]. He is rendered in real 3D using a custom software renderer without relying on external image files[cite: 5].
+![ARES Walk Cycle and Views](p2.png)
 
-Voice Control & AI Vision: Summon ARES using a global hotkey (default: `) to dictate text, draft emails, or ask questions[cite: 6, 10]. He can also analyze your screen to summarize web pages, translate text, review code, or find bugs[cite: 6].
+## Key Features
 
-Productivity Tools: Includes built-in commands for setting timers, running Pomodoro focus sessions, taking quick notes, and monitoring system hardware like CPU, RAM, and battery levels[cite: 8].
+* **Desktop Presence:** ARES roams your screen, walks on the taskbar, and can perch on the top edges of open windows. He is rendered in real 3D using a custom software renderer without relying on external image files.
+* **Voice Control & AI Vision:** Summon ARES using a global hotkey (default: `) to dictate text, draft emails, or ask questions. He can also analyze your screen to summarize web pages, translate text, review code, or find bugs.
+* **Productivity Tools:** Includes built-in commands for setting timers, running Pomodoro focus sessions, taking quick notes, and monitoring system hardware like CPU, RAM, and battery levels.
+* **Daily Habits:** Delivers a morning briefing covering your calendar and local weather, alongside periodic nudges to drink water, stretch, or rest your eyes during long work sessions.
+* **Interactivity & Antics:** You can pet, poke, or drag him across the screen using your mouse. When idle, he entertains himself with a large library of animations, including sword practice, dancing, backflips, and meditating.
 
-Daily Habits: Delivers a morning briefing covering your calendar and local weather, alongside periodic nudges to drink water, stretch, or rest your eyes during long work sessions[cite: 8, 9].
+![ARES Action Poses](p1.png)
 
-Interactivity & Antics: You can pet, poke, or drag him across the screen using your mouse[cite: 6]. When idle, he entertains himself with a large library of animations, including sword practice, dancing, backflips, and meditating[cite: 5, 6].
+## Installation & Setup
 
-[cite: 13]
+1. Install the required GUI and system dependencies by running `pip install PySide6 psutil`.
+2. Configure your environment variables and API keys (e.g., Groq, Tavily, Sarvam) in the `.env` file.
+3. Double-click `Ares.pyw` to launch the companion silently in the background without opening a terminal window.
 
-Installation & Setup
-Install the required GUI and system dependencies by running pip install PySide6 psutil[cite: 6].
+![ARES Emotes and Dances](p3.png)
 
-Configure your environment variables and API keys (e.g., Groq, Tavily, Sarvam) in the .env file[cite: 2, 6].
+## Usage
 
-Double-click Ares.pyw to launch the companion silently in the background without opening a terminal window[cite: 4, 6].
-
-[cite: 12]
-
-Usage
-Commands: Press the ` (backtick) key to wake ARES up and speak your command[cite: 6, 10].
-
-Interaction: Left-click and hold to drag him around your workspace, or stroke the mouse back and forth over him to pet him[cite: 6].
-
-Gaming Mode: ARES monitors active windows and will automatically hide himself when a fullscreen game or application is in focus[cite: 6].
+* **Commands:** Press the ` (backtick) key to wake ARES up and speak your command. 
+* **Interaction:** Left-click and hold to drag him around your workspace, or stroke the mouse back and forth over him to pet him. 
+* **Gaming Mode:** ARES monitors active windows and will automatically hide himself when a fullscreen game or application is in focus.
